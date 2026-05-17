@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+
+{% block title %}Home{% endblock title %}
+
+{% block content %}
+<section class="bg-blue-900 py-20 text-white">
+    <div class="container mx-auto px-6 text-center">
+        <h1 class="text-5xl font-bold mb-4">Explorando o Conhecimento</h1>
+        <p class="text-blue-200 text-xl max-w-2xl mx-auto">Análises profundas e insights sobre tecnologia, negócios e desenvolvimento.</p>
+    </div>
+</section>
+
+<div class="container mx-auto px-6 -mt-10">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        {% for post in posts %}
+<article class="bg-white rounded-xl shadow-lg overflow-hidden border border-slate-100 flex flex-col">
+    {% if post.image_cover %}
+        <img src="{{ post.image_cover.url }}" class="h-56 w-full object-cover" alt="{{ post.title }}">
+    {% else %}
+        <div class="h-56 w-full bg-slate-200 flex items-center justify-center text-slate-400">Sem imagem</div>
+    {% endif %}
+    
+    <div class="p-6 flex-grow">
+        <p class="text-blue-600 text-sm font-bold uppercase mb-2">{{ post.created_at|date:"d M, Y" }}</p>
+        <h2 class="text-2xl font-bold mb-3 hover:text-blue-900 transition">
+            <a href="{% url 'posts:detail' post.slug %}">{{ post.title }}</a>
+        </h2>
+        
+        <p class="text-slate-600 line-clamp-3 mb-4">
+            {{ post.description }}
+        </p>
+    </div>
+    <div class="px-6 pb-6 mt-auto">
+        <a href="{% url 'posts:detail' post.slug %}" class="text-blue-900 font-semibold flex items-center hover:underline">
+            Ler artigo <span class="ml-2">&rarr;</span>
+        </a>
+    </div>
+</article>
+{% empty %}
+<p class="text-center col-span-full py-20 text-slate-500 italic">Nenhum post publicado ainda.</p>
+{% endfor %}
+    </div>
+</div>
+{% endblock %}

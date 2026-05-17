@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}{% endblock %} | Garden Brows Studio</title>
+    <script src="https://cdn.tailwindcss.com?plugins=typography"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Merriweather:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        h1, h2, h3 { font-family: 'Merriweather', serif; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-900 flex flex-col min-height-screen">
+    <nav class="bg-white border-b border-slate-200 py-4 sticky top-0 z-50">
+        <div class="container mx-auto px-6 flex justify-between items-center">
+            <a href="{% url 'posts:index' %}" class="text-2xl font-bold text-blue-900 uppercase tracking-tighter">Insight<span class="text-blue-500">Blog</span></a>
+            <div class="space-x-8 font-medium text-slate-600">
+                <a href="/" class="hover:text-blue-900 transition">Início</a>
+                <a href="#" class="hover:text-blue-900 transition">Sobre</a>
+                <a href="#" class="hover:text-blue-900 transition">Contato</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="flex-grow">
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="bg-white border-t border-slate-200 py-10 mt-20">
+        <div class="container mx-auto px-6 text-center text-slate-500 text-sm">
+            &copy; 2024 InsightBlog. Desenvolvido com Python/Django e Tailwind CSS.
+        </div>
+    </footer>
+</body>
+</html>
