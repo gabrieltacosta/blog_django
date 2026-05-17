@@ -28,7 +28,13 @@ SECRET_KEY = 'django-insecure-rd3nvo!(&6th($xk2ac6tu38jnzw-76@ffgeax!t^e#7cj8bem
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config('DEBUG', cast=bool, default=False)
 
-ALLOWED_HOSTS = ["*"]
+ALLOWED_HOSTS = ['192.168.10.254', 'localhost', '127.0.0.1', 'blog.hawkdev.cloud']
+
+
+CSRF_TRUSTED_ORIGINS = [
+    'https://blog.hawkdev.cloud',
+    'http://blog.hawkdev.cloud'
+]
 
 
 # Application definition
@@ -120,8 +126,8 @@ USE_TZ = False
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
-STATIC_URL = 'static/'
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
