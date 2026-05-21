@@ -9,13 +9,13 @@ from django.db.models.signals import post_delete, pre_save
 from django.dispatch import receiver
 from django_ckeditor_5.fields import CKEditor5Field
 import cuid2
-from PIL import Image  # Importa o Pillow para processar a imagem
+from PIL import Image, ImageOps  # Importa o Pillow para processar a imagem
 
 def generate_cuid():
     return cuid2.cuid_wrapper()()
 
 # --- FUNÇÃO PARA COMPRIMIR E CONVERTER PARA WEBP ---
-def compress_and_convert_to_webp(image_field, max_width=1024, quality=80):
+def compress_and_convert_to_webp(image_field, max_width=1024, quality=80, is_avatar=False):
     """
     Recebe um ImageField, converte para .webp, redimensiona se for muito grande
     e comprime usando um buffer na memória.
@@ -26,6 +26,8 @@ def compress_and_convert_to_webp(image_field, max_width=1024, quality=80):
     # Abre a imagem original usando o Pillow
     img = Image.open(image_field)
 
+    img = ImageOps.exif_transpose(img)
+
     # Converte para RGB (necessário se a imagem original for PNG com transparência ou RGBA)
     if img.mode in ('RGBA', 'LA') or (img.mode == 'P' and 'transparency' in img.info):
         # Cria um fundo branco para manter a visibilidade caso haja transparência
@@ -35,17 +37,20 @@ def compress_and_convert_to_webp(image_field, max_width=1024, quality=80):
     else:
         img = img.convert('RGB')
 
+    if is_avatar:
+        img = ImageOps.fit(img, (max_width, max_width), Image.Resampling.LANCZOS)
+    else:
     # Redimensiona proporcionalmente se a largura for maior que o permitido (ex: 1024px)
-    if img.width > max_width:
-        output_size = (max_width, int((max_width / img.width) * img.height))
-        img = img.resize(output_size, Image.Resampling.LANCZOS)
+        if img.width > max_width:
+            output_size = (max_width, int((max_width / img.width) * img.height))
+            img = img.resize(output_size, Image.Resampling.LANCZOS)
 
     # Cria o buffer na memória (BytesIO)
     image_io = BytesIO()
-    
+
     # Salva a imagem no buffer formato WEBP com a qualidade desejada (0-100)
     img.save(image_io, format='WEBP', quality=quality, optimize=True)
-    
+
     # Altera a extensão do nome do arquivo original para .webp
     current_filename = os.path.splitext(image_field.name)[0]
     new_filename = f"{current_filename}.webp"
@@ -72,7 +77,7 @@ class Usuario(AbstractUser):
     def save(self, *args, **kwargs):
         # Se uma nova imagem foi enviada, comprime antes de salvar
         if self.image and not self.image.name.endswith('.webp'):
-            compress_and_convert_to_webp(self.image, max_width=400, quality=85) # Avatares podem ser menores (400px)
+            compress_and_convert_to_webp(self.image, max_width=400, quality=85, is_avatar=True) # Avatares podem ser menores (400px)
         super().save(*args, **kwargs)
 
 class Post(models.Model):
@@ -99,27 +104,27 @@ class Post(models.Model):
         # 1. Gera o slug se não existir
         if not self.slug:
             self.slug = slugify(self.title)
-        
+
         # 2. Se uma nova capa foi enviada, comprime e converte para .webp
         if self.image_cover and not self.image_cover.name.endswith('.webp'):
-            compress_and_convert_to_webp(self.image_cover, max_width=1200, quality=80)
+            compress_and_convert_to_webp(self.image_cover, max_width=1200, quality=80, is_avatar=False)
 
         # 3. --- SISTEMA DE LIMPEZA DE IMAGENS DO CKEDITOR ---
         if self.pk:  # Só faz isso se o post já existir (ou seja, se for uma EDIÇÃO)
             try:
                 # Busca a versão atual do post diretamente do banco de dados antes de salvar o novo texto
                 post_antigo = Post.objects.get(pk=self.pk)
-                
+
                 # Expressão regular para encontrar o caminho de todas as imagens (<img src="...">)
                 # Ela captura o que estiver dentro de /media/...webp
                 pattern = r'src="/media/([^"]+)"'
-                
+
                 imagens_antigas = set(re.findall(pattern, post_antigo.content))
                 imagens_novas = set(re.findall(pattern, self.content))
-                
+
                 # Descobre quais imagens foram deletadas pelo usuário no editor
                 imagens_removidas = imagens_antigas - imagens_novas
-                
+
                 # Apaga os arquivos físicos das imagens removidas
                 from django.conf import settings
                 for img_path_relativo in imagens_removidas:
@@ -127,7 +132,7 @@ class Post(models.Model):
                     caminho_absoluto = os.path.join(settings.MEDIA_ROOT, img_path_relativo)
                     if os.path.isfile(caminho_absoluto):
                         os.remove(caminho_absoluto)
-                        
+
             except Post.DoesNotExist:
                 pass
         # -----------------------------------------------------

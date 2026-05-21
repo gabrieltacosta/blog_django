@@ -1,2 +1,10 @@
+/* static/css/input.css */
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
+
+@source "../../templates/**/*.html";
+@source "../../**/templates/**/*.html";
+
+/* Força o Tailwind v4 a incluir a tipografia no build de produção:
+  class="prose prose-slate prose-lg lg:prose-xl prose-blue"
+*/
